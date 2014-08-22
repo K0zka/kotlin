@@ -41,6 +41,7 @@ import java.util.*;
 import static org.jetbrains.jet.lang.descriptors.CallableMemberDescriptor.Kind.DELEGATION;
 import static org.jetbrains.jet.lang.descriptors.CallableMemberDescriptor.Kind.FAKE_OVERRIDE;
 import static org.jetbrains.jet.lang.resolve.DelegationResolver.generateDelegatedMembers;
+import static org.jetbrains.jet.lang.resolve.DescriptorUtils.isAnnotationClass;
 
 public class LazyClassMemberScope extends AbstractLazyMemberScope<LazyClassDescriptor, ClassMemberDeclarationProvider> {
 
@@ -231,7 +232,7 @@ public class LazyClassMemberScope extends AbstractLazyMemberScope<LazyClassDescr
             if (!name.equals(valueParameterDescriptor.getName())) continue;
 
             JetParameter parameter = primaryConstructorParameters.get(valueParameterDescriptor.getIndex());
-            if (parameter.hasValOrVarNode()) {
+            if (parameter.hasValOrVarNode() || isAnnotationClass(getContainingDeclaration())) {
                 PropertyDescriptor propertyDescriptor =
                         resolveSession.getDescriptorResolver().resolvePrimaryConstructorParameterToAProperty(
                                 thisDescriptor,

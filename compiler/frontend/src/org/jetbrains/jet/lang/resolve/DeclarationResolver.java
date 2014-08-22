@@ -46,6 +46,7 @@ import javax.inject.Inject;
 import java.util.*;
 
 import static org.jetbrains.jet.lang.diagnostics.Errors.REDECLARATION;
+import static org.jetbrains.jet.lang.resolve.DescriptorUtils.isAnnotationClass;
 import static org.jetbrains.jet.lang.resolve.ScriptHeaderResolver.resolveScriptDeclarations;
 
 public class DeclarationResolver {
@@ -101,7 +102,7 @@ public class DeclarationResolver {
             JetClassOrObject classOrObject = entry.getKey();
             MutableClassDescriptor classDescriptor = (MutableClassDescriptor) entry.getValue();
 
-            if (classOrObject instanceof JetClass && DescriptorUtils.isAnnotationClass(classDescriptor)) {
+            if (classOrObject instanceof JetClass && isAnnotationClass(classDescriptor)) {
                 processPrimaryConstructor(c, classDescriptor, (JetClass) classOrObject);
             }
         }
@@ -112,7 +113,7 @@ public class DeclarationResolver {
             JetClassOrObject classOrObject = entry.getKey();
             MutableClassDescriptor classDescriptor = (MutableClassDescriptor) entry.getValue();
 
-            if (classOrObject instanceof JetClass && !DescriptorUtils.isAnnotationClass(classDescriptor)) {
+            if (classOrObject instanceof JetClass && !isAnnotationClass(classDescriptor)) {
                 processPrimaryConstructor(c, classDescriptor, (JetClass) classOrObject);
             }
         }
@@ -259,7 +260,7 @@ public class DeclarationResolver {
             List<ValueParameterDescriptor> notProperties = new ArrayList<ValueParameterDescriptor>();
             for (ValueParameterDescriptor valueParameterDescriptor : valueParameterDescriptors) {
                 JetParameter parameter = primaryConstructorParameters.get(valueParameterDescriptor.getIndex());
-                if (parameter.hasValOrVarNode()) {
+                if (parameter.hasValOrVarNode() || isAnnotationClass(classDescriptor)) {
                     PropertyDescriptor propertyDescriptor = descriptorResolver.resolvePrimaryConstructorParameterToAProperty(
                             classDescriptor,
                             valueParameterDescriptor,
