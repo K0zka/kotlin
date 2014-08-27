@@ -19,30 +19,20 @@ package org.jetbrains.jet.lang.resolve.java.lazy.descriptors
 import org.jetbrains.jet.lang.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.jet.lang.types.JetType
 import org.jetbrains.jet.lang.descriptors.ValueParameterDescriptor
-import org.jetbrains.jet.lang.resolve.constants.CompileTimeConstant
 import org.jetbrains.jet.lang.resolve.java.lazy.LazyJavaResolverContextWithTypes
 import org.jetbrains.jet.lang.resolve.java.structure.*
 import org.jetbrains.jet.lang.types.ErrorUtils
 import org.jetbrains.jet.lang.resolve.constants.*
 import org.jetbrains.jet.lang.resolve.name.Name
 import org.jetbrains.jet.lang.resolve.name.FqName
-import org.jetbrains.jet.lang.types.lang.KotlinBuiltIns
 import org.jetbrains.jet.lang.descriptors.ClassDescriptor
-import org.jetbrains.jet.lang.descriptors.VariableDescriptor
 import org.jetbrains.jet.lang.resolve.java.JvmAnnotationNames.*
 import org.jetbrains.jet.lang.resolve.java.JvmAnnotationNames
 import org.jetbrains.jet.lang.resolve.java.resolver.DescriptorResolverUtils
-import org.jetbrains.jet.lang.resolve.DescriptorUtils
-import org.jetbrains.jet.lang.descriptors.PropertyDescriptor
 import org.jetbrains.jet.lang.resolve.java.resolver.TypeUsage
 import org.jetbrains.jet.lang.types.TypeProjectionImpl
-import org.jetbrains.jet.lang.types.JetTypeImpl
-import org.jetbrains.jet.lang.types.TypeConstructor
-import org.jetbrains.jet.lang.types.TypeProjection
-import org.jetbrains.jet.lang.resolve.scopes.JetScope
 import org.jetbrains.jet.lang.resolve.java.lazy.types.LazyJavaType
 import org.jetbrains.jet.utils.valuesToMap
-import org.jetbrains.jet.utils.keysToMap
 import org.jetbrains.jet.utils.keysToMapExceptNulls
 import org.jetbrains.jet.lang.resolve.java.lazy.types.toAttributes
 import org.jetbrains.jet.renderer.DescriptorRenderer
@@ -110,7 +100,7 @@ class LazyJavaAnnotationDescriptor(
     private fun resolveAnnotationArgument(argument: JavaAnnotationArgument?): CompileTimeConstant<*>? {
         return when (argument) {
             is JavaLiteralAnnotationArgument -> createCompileTimeConstant(argument.getValue(), true, false, false, null)
-            is JavaReferenceAnnotationArgument -> resolveFromReference(argument.resolve())
+            is JavaEnumValueAnnotationArgument -> resolveFromEnumValue(argument.resolve())
             is JavaArrayAnnotationArgument -> resolveFromArray(argument.getName() ?: DEFAULT_ANNOTATION_MEMBER_NAME, argument.getElements())
             is JavaAnnotationAsAnnotationArgument -> resolveFromAnnotation(argument.getAnnotation())
             is JavaClassObjectAnnotationArgument -> resolveFromJavaClassObjectType(argument.getReferencedType())
@@ -141,10 +131,8 @@ class LazyJavaAnnotationDescriptor(
         return ArrayValue(values, valueParameter.getType(), true, values.any { it.usesVariableAsConstant() })
     }
 
-    private fun resolveFromReference(element: JavaElement?): CompileTimeConstant<*>? {
-        if (element !is JavaField) return null
-
-        if (!element.isEnumEntry()) return null
+    private fun resolveFromEnumValue(element: JavaField?): CompileTimeConstant<*>? {
+        if (element == null || !element.isEnumEntry()) return null
 
         val containingJavaClass = element.getContainingClass()
 

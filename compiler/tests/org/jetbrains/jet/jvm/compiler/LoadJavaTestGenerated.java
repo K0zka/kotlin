@@ -312,6 +312,11 @@ public class LoadJavaTestGenerated extends AbstractLoadJavaTest {
                 doTestCompiledJava("compiler/testData/loadJava/compiledJava/annotations/EnumInParam.java");
             }
             
+            @TestMetadata("NestedEnumArgument.java")
+            public void testNestedEnumArgument() throws Exception {
+                doTestCompiledJava("compiler/testData/loadJava/compiledJava/annotations/NestedEnumArgument.java");
+            }
+            
             @TestMetadata("PrimitiveValueInParam.java")
             public void testPrimitiveValueInParam() throws Exception {
                 doTestCompiledJava("compiler/testData/loadJava/compiledJava/annotations/PrimitiveValueInParam.java");
