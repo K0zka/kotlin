@@ -60,7 +60,7 @@ public class LazyJavaPackageFragmentProvider(
             LazyPackageFragmentForJavaPackage(c, _module, jPackage)
         }
         else {
-            val jClass = c.findJavaClass(fqName)
+            val jClass = c.findTopLevelJavaClass(fqName)
             if (jClass != null) {
                 packageFragmentsForClasses(jClass)
             }

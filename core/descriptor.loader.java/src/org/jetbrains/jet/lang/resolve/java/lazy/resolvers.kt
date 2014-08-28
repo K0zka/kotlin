@@ -24,9 +24,9 @@ import org.jetbrains.jet.lang.resolve.java.lazy.descriptors.LazyJavaTypeParamete
 import org.jetbrains.jet.lang.descriptors.DeclarationDescriptor
 import org.jetbrains.jet.lang.resolve.name.FqName
 import org.jetbrains.jet.lang.resolve.kotlin.header.KotlinClassHeader
-import org.jetbrains.jet.lang.resolve.java.resolver.DescriptorResolverUtils
 import org.jetbrains.jet.lang.resolve.kotlin.KotlinJvmBinaryClass
 import org.jetbrains.jet.lang.resolve.resolveTopLevelClass
+import org.jetbrains.jet.descriptors.serialization.ClassId
 
 //TODO: (module refactoring) usages of this interface should be replaced by ModuleClassResolver
 trait LazyJavaClassResolver {
@@ -65,7 +65,7 @@ class LazyJavaTypeParameterResolver(
     }
 }
 
-fun LazyJavaResolverContext.findJavaClass(fqName: FqName): JavaClass? = findClassInJava(fqName).jClass
+fun LazyJavaResolverContext.findTopLevelJavaClass(fqName: FqName): JavaClass? = findClassInJava(ClassId.topLevel(fqName)).jClass
 
 data class JavaClassLookupResult(val jClass: JavaClass? = null, val kClass: ClassDescriptor? = null)
 
@@ -74,12 +74,12 @@ fun LazyJavaResolverContext.lookupBinaryClass(javaClass: JavaClass): ClassDescri
     return resolveBinaryClass(kotlinJvmBinaryClass)?.kClass
 }
 
-fun LazyJavaResolverContext.findClassInJava(fqName: FqName): JavaClassLookupResult {
-    val kotlinClass = kotlinClassFinder.findKotlinClass(fqName)
+fun LazyJavaResolverContext.findClassInJava(classId: ClassId): JavaClassLookupResult {
+    val kotlinClass = kotlinClassFinder.findKotlinClass(classId)
     val binaryClassResult = resolveBinaryClass(kotlinClass)
     if (binaryClassResult != null) return binaryClassResult
 
-    val javaClass = finder.findClass(fqName)
+    val javaClass = finder.findClass(classId)
     if (javaClass == null) return JavaClassLookupResult()
 
     // Light classes are not proper binaries either

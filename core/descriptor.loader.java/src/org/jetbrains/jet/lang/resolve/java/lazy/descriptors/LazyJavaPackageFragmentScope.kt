@@ -28,7 +28,7 @@ import org.jetbrains.jet.utils.flatten
 import org.jetbrains.jet.lang.resolve.java.structure.JavaClass
 import org.jetbrains.kotlin.util.inn
 import org.jetbrains.kotlin.util.sure
-import org.jetbrains.jet.lang.resolve.java.lazy.findJavaClass
+import org.jetbrains.jet.lang.resolve.java.lazy.findTopLevelJavaClass
 import org.jetbrains.jet.lang.resolve.java.lazy.findClassInJava
 import org.jetbrains.jet.lang.resolve.java.PackageClassUtils
 import org.jetbrains.jet.lang.resolve.scopes.JetScope
@@ -39,6 +39,8 @@ import org.jetbrains.jet.lang.resolve.java.lazy.descriptors.LazyJavaMemberScope.
 import org.jetbrains.jet.lang.resolve.java.descriptor.SamConstructorDescriptor
 import org.jetbrains.jet.lang.resolve.name.SpecialNames
 import org.jetbrains.jet.lang.resolve.kotlin.KotlinJvmBinaryClass
+import org.jetbrains.jet.descriptors.serialization.ClassId
+import org.jetbrains.jet.lang.resolve.name.FqNameUnsafe
 
 public abstract class LazyJavaPackageFragmentScope(
         c: LazyJavaResolverContext,
@@ -49,7 +51,7 @@ public abstract class LazyJavaPackageFragmentScope(
 
     protected fun computeMemberIndexForSamConstructors(delegate: MemberIndex): MemberIndex = object : MemberIndex by delegate {
         override fun getAllMethodNames(): Collection<Name> {
-            val jClass = c.findJavaClass(fqName)
+            val jClass = c.findTopLevelJavaClass(fqName)
             return delegate.getAllMethodNames() +
                    // For SAM-constructors
                    getAllClassNames() +
@@ -107,8 +109,8 @@ public class LazyPackageFragmentScopeForJavaPackage(
 
     private val classes = c.storageManager.createMemoizedFunctionWithNullableValues<Name, ClassDescriptor> {
         name ->
-        val fqName = fqName.child(SpecialNames.safeIdentifier(name))
-        val (jClass, kClass) = c.findClassInJava(fqName)
+        val classId = ClassId(fqName, FqNameUnsafe.topLevel(SpecialNames.safeIdentifier(name)))
+        val (jClass, kClass) = c.findClassInJava(classId)
         if (kClass != null)
             kClass
         else if (jClass == null)
