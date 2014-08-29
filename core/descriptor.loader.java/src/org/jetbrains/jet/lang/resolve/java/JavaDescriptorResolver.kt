@@ -16,20 +16,11 @@
 
 package org.jetbrains.jet.lang.resolve.java
 
-import org.jetbrains.jet.lang.descriptors.ClassDescriptor
-import org.jetbrains.jet.lang.descriptors.ModuleDescriptor
-import org.jetbrains.jet.lang.descriptors.PackageFragmentDescriptor
+import org.jetbrains.jet.lang.descriptors.*
+import org.jetbrains.jet.lang.resolve.java.structure.*
 import org.jetbrains.jet.lang.resolve.java.lazy.LazyJavaPackageFragmentProvider
-import org.jetbrains.jet.lang.resolve.java.structure.JavaClass
-import org.jetbrains.jet.lang.resolve.java.structure.JavaMethod
-import org.jetbrains.jet.lang.descriptors.FunctionDescriptor
 import org.jetbrains.jet.lang.resolve.scopes.JetScope
-import org.jetbrains.jet.lang.resolve.java.structure.JavaField
-import org.jetbrains.jet.lang.resolve.java.structure.JavaMember
-import org.jetbrains.jet.lang.descriptors.PropertyDescriptor
 import org.jetbrains.jet.lang.resolve.java.sources.JavaSourceElement
-import org.jetbrains.jet.lang.resolve.java.structure.JavaElement
-import org.jetbrains.jet.lang.descriptors.DeclarationDescriptorWithSource
 
 public class JavaDescriptorResolver(public val packageFragmentProvider: LazyJavaPackageFragmentProvider, private val module: ModuleDescriptor) {
     public fun resolveClass(javaClass: JavaClass): ClassDescriptor? {
@@ -42,12 +33,11 @@ public class JavaDescriptorResolver(public val packageFragmentProvider: LazyJava
 }
 
 public fun JavaDescriptorResolver.resolveMethod(method: JavaMethod): FunctionDescriptor? {
-    val functions = if (method.isConstructor())
-                        resolveClass(method.getContainingClass())?.getConstructors()
-                    else
-                        getContainingScope(method)?.getFunctions(method.getName())
+    return getContainingScope(method)?.getFunctions(method.getName())?.findByJavaElement(method)
+}
 
-    return functions?.findByJavaElement(method)
+public fun JavaDescriptorResolver.resolveConstructor(constructor: JavaConstructor): ConstructorDescriptor? {
+    return resolveClass(constructor.getContainingClass())?.getConstructors()?.findByJavaElement(constructor)
 }
 
 public fun JavaDescriptorResolver.resolveField(field: JavaField): PropertyDescriptor? {

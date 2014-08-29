@@ -38,6 +38,7 @@ import org.jetbrains.jet.lang.descriptors.FunctionDescriptor;
 import org.jetbrains.jet.lang.descriptors.VariableDescriptor;
 import org.jetbrains.jet.lang.resolve.java.JavaDescriptorResolver;
 import org.jetbrains.jet.lang.resolve.java.JavaPackage;
+import org.jetbrains.jet.lang.resolve.java.structure.impl.JavaConstructorImpl;
 import org.jetbrains.jet.lang.resolve.java.structure.impl.JavaFieldImpl;
 import org.jetbrains.jet.lang.resolve.java.structure.impl.JavaMethodImpl;
 import org.jetbrains.jet.plugin.JetBundle;
@@ -147,11 +148,17 @@ public class KotlinSignatureAnnotationIntention extends BaseIntentionAction impl
 
         if (psiMember instanceof PsiMethod) {
             PsiMethod psiMethod = (PsiMethod) psiMember;
-            FunctionDescriptor functionDescriptor = JavaPackage.resolveMethod(javaDescriptorResolver, new JavaMethodImpl(psiMethod));
-            assert functionDescriptor != null: "Couldn't find function descriptor for " + renderMember(psiMember);
-            return functionDescriptor instanceof ConstructorDescriptor
-                    ? getDefaultConstructorAnnotation((ConstructorDescriptor) functionDescriptor)
-                    : RENDERER.render(functionDescriptor);
+            if (psiMethod.isConstructor()) {
+                ConstructorDescriptor constructorDescriptor =
+                        JavaPackage.resolveConstructor(javaDescriptorResolver, new JavaConstructorImpl(psiMethod));
+                assert constructorDescriptor != null: "Couldn't find constructor descriptor for " + renderMember(psiMember);
+                return getDefaultConstructorAnnotation(constructorDescriptor);
+            }
+            else {
+                FunctionDescriptor functionDescriptor = JavaPackage.resolveMethod(javaDescriptorResolver, new JavaMethodImpl(psiMethod));
+                assert functionDescriptor != null: "Couldn't find function descriptor for " + renderMember(psiMember);
+                return RENDERER.render(functionDescriptor);
+            }
         }
 
         if (psiMember instanceof PsiField) {
