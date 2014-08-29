@@ -65,7 +65,8 @@ class LazyJavaTypeParameterResolver(
     }
 }
 
-fun LazyJavaResolverContext.findTopLevelJavaClass(fqName: FqName): JavaClass? = findClassInJava(ClassId.topLevel(fqName)).jClass
+fun LazyJavaResolverContext.findTopLevelJavaClass(fqName: FqName): JavaClass? =
+        if (fqName.isRoot()) null else findClassInJava(ClassId.topLevel(fqName)).jClass
 
 data class JavaClassLookupResult(val jClass: JavaClass? = null, val kClass: ClassDescriptor? = null)
 
