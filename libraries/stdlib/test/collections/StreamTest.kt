@@ -179,21 +179,22 @@ public class StreamTest {
 
     test fun flatMapAndTakeExtractTheTransformedElements() {
         val intToBinaryDigits = {(i: Int) ->
-            val binary = Integer.toBinaryString(i)
+            val text = i.toString()
             var index = 0
-            stream { if (index < binary.length()) binary.get(index++) else null }
+            stream { if (index < text.length()) text.get(index++) else null }
         }
 
         val expected = arrayListOf(
-                '0', // fibonacci(0) = 0
-                '1', // fibonacci(1) = 1
-                '1', // fibonacci(2) = 1
-                '1', '0', // fibonacci(3) = 2
-                '1', '1', // fibonacci(4) = 3
-                '1', '0', '1'  // fibonacci(5) = 5
+                '3', // fibonacci(4) = 3
+                '5', // fibonacci(5) = 5
+                '8', // fibonacci(6) = 8
+                '1', '3', // fibonacci(7) = 13
+                '2', '1', // fibonacci(8) = 21
+                '3', '4', // fibonacci(9) = 34
+                '5' // fibonacci(10) = 55
                                   )
 
-        assertEquals(expected, fibonacci().flatMap(intToBinaryDigits).take(10).toList())
+        assertEquals(expected, fibonacci().drop(4).flatMap(intToBinaryDigits).take(10).toList())
     }
 
     test fun flatMap() {
