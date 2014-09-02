@@ -15,26 +15,37 @@ public class FilteringStream<T>(private val stream: Stream<T>,
                                ) : Stream<T> {
 
     override fun iterator(): Iterator<T> = object : Iterator<T> {
-        val iterator = stream.iterator()
-        var next: T? = null
+        val iterator = stream.iterator();
+        var nextState: Int = -1 // -1 for unknown, 0 for done, 1 for continue
+        var nextItem: T? = null
 
-        override fun next(): T {
-            val result = next as T
-
-            // Clean next to avoid keeping reference on yielded instance
-            next = null
-            return result
-        }
-
-        override fun hasNext(): Boolean {
+        fun calcNext() {
             while (iterator.hasNext()) {
                 val item = iterator.next()
                 if (predicate(item) == sendWhen) {
-                    next = item
-                    return true
+                    nextItem = item
+                    nextState = 1
+                    return
                 }
             }
-            return false
+            nextState = 0
+        }
+
+        override fun next(): T {
+            if (nextState == -1)
+                calcNext()
+            if (nextState == 0)
+                throw NoSuchElementException()
+            val result = nextItem
+            nextItem = null
+            nextState = -1
+            return result as T
+        }
+
+        override fun hasNext(): Boolean {
+            if (nextState == -1)
+                calcNext()
+            return nextState == 1
         }
     }
 }
