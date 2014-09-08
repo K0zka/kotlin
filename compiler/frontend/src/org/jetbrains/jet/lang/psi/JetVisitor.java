@@ -74,6 +74,10 @@ public class JetVisitor<R, D> extends PsiElementVisitor {
         return visitJetElement(importList, data);
     }
 
+    public R visitFileAnnotationList(JetFileAnnotationList fileAnnotationList, D data) {
+        return visitJetElement(fileAnnotationList, data);
+    }
+
     public R visitClassBody(@NotNull JetClassBody classBody, D data) {
         return visitJetElement(classBody, data);
     }

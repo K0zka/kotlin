@@ -167,17 +167,24 @@ public class JetParsing extends AbstractJetParsing {
 
     /*
      *preamble
-     *  : packageDirective? import*
+     *  : fileAnnotationList? packageDirective? import*
      *  ;
      */
     private void parsePreamble() {
+        PsiBuilder.Marker firstEntry = mark();
+
+        /*
+         * fileAnnotationList
+         *   : fileAnnotations*
+         */
+        parseFileAnnotationList(/*reportErrorForNonFileAnnotations =*/ true);
+
         /*
          * packageDirective
          *   : modifiers "package" SimpleName{"."} SEMI?
          *   ;
          */
         PsiBuilder.Marker packageDirective = mark();
-        PsiBuilder.Marker firstEntry = mark();
         parseModifierList(MODIFIER_LIST, true);
 
         if (at(PACKAGE_KEYWORD)) {
@@ -188,7 +195,11 @@ public class JetParsing extends AbstractJetParsing {
 
             if (at(LBRACE)) {
                 // Because it's blocked package and it will be parsed as one of top level objects
+                packageDirective.drop();
                 firstEntry.rollbackTo();
+
+                parseFileAnnotationList(/*reportErrorForNonFileAnnotations =*/ false);
+                packageDirective = mark();
                 packageDirective.done(PACKAGE_DIRECTIVE);
                 return;
             }
@@ -198,7 +209,11 @@ public class JetParsing extends AbstractJetParsing {
             consumeIf(SEMICOLON);
         }
         else {
+            packageDirective.drop();
             firstEntry.rollbackTo();
+
+            parseFileAnnotationList(/*reportErrorForNonFileAnnotations =*/ false);
+            packageDirective = mark();
         }
         packageDirective.done(PACKAGE_DIRECTIVE);
 
@@ -414,28 +429,81 @@ public class JetParsing extends AbstractJetParsing {
     }
 
     /*
+     * fileAnnotationList
+     *   : ("[" "file:" annotationEntry+ "]")*
+     *   ;
+     */
+    private void parseFileAnnotationList(boolean reportErrorForNonFileAnnotations) {
+        PsiBuilder.Marker fileAnnotationsList = mark();
+
+        if (parseAnnotations(/*allowShortAnnotations =*/ false, /*expectedFileAnnotations =*/ true, reportErrorForNonFileAnnotations)) {
+            fileAnnotationsList.done(FILE_ANNOTATION_LIST);
+        }
+        else {
+            fileAnnotationsList.drop();
+        }
+    }
+
+    void parseAnnotations(boolean allowShortAnnotations) {
+        parseAnnotations(allowShortAnnotations, /*expectedFileAnnotations =*/ false, /*reportErrorForNonFileAnnotations =*/ false);
+    }
+
+    /*
      * annotations
      *   : annotation*
      *   ;
      */
-    void parseAnnotations(boolean allowShortAnnotations) {
+    boolean parseAnnotations(boolean allowShortAnnotations, boolean expectedFileAnnotations, boolean reportErrorForNonFileAnnotations) {
+        boolean result = false;
         while (true) {
-            if (!(parseAnnotation(allowShortAnnotations))) break;
+            boolean success = parseAnnotation(allowShortAnnotations, expectedFileAnnotations, reportErrorForNonFileAnnotations);
+            result |= success;
+
+            if (!(success)) break;
         }
+
+        return result;
+    }
+
+    private boolean parseAnnotation(boolean allowShortAnnotations) {
+        return parseAnnotation(allowShortAnnotations, /*expectedFileAnnotations =*/ false, /*reportErrorForNonFileAnnotations =*/ false);
     }
 
     /*
      * annotation
-     *   : "[" annotationEntry+ "]"
+     *   : "[" ("file" ":")? annotationEntry+ "]"
      *   : annotationEntry
      *   ;
      */
-    private boolean parseAnnotation(boolean allowShortAnnotations) {
+    private boolean parseAnnotation(
+            boolean allowShortAnnotations,
+            boolean expectedFileAnnotations,
+            boolean reportErrorForNonFileAnnotations
+    ) {
+        boolean result = false;
+        PsiBuilder.Marker start = mark();
+
         if (at(LBRACKET)) {
             PsiBuilder.Marker annotation = mark();
 
             myBuilder.disableNewlines();
             advance(); // LBRACKET
+
+            if (expectedFileAnnotations) {
+                if (!reportErrorForNonFileAnnotations && !(at(FILE_KEYWORD) && lookahead(1) == COLON)) {
+                    annotation.drop();
+                    start.rollbackTo();
+                    myBuilder.restoreNewlinesState();
+                    return false;
+                }
+
+                String message = "Expecting \"" + FILE_KEYWORD.getValue() + COLON.getValue() + "\" prefix for file annotations";
+                expect(FILE_KEYWORD, message);
+                expect(COLON, message, TokenSet.create(IDENTIFIER, RBRACKET));
+            }
+            else if (at(FILE_KEYWORD) && lookahead(1) == COLON) {
+                errorAndAdvance("File annotations are only allowed before package declaration", 2);
+            }
 
             if (!at(IDENTIFIER)) {
                 error("Expecting a list of attributes");
@@ -458,13 +526,15 @@ public class JetParsing extends AbstractJetParsing {
             myBuilder.restoreNewlinesState();
 
             annotation.done(ANNOTATION);
-            return true;
+            result = true;
         }
         else if (allowShortAnnotations && at(IDENTIFIER)) {
             parseAnnotationEntry();
-            return true;
+            result = true;
         }
-        return false;
+
+        start.drop();
+        return result;
     }
 
     /*
@@ -1533,7 +1603,8 @@ public class JetParsing extends AbstractJetParsing {
 
         PsiBuilder.Marker reference = mark();
         while (true) {
-            if (expect(IDENTIFIER, "Expecting type name", TokenSet.orSet(JetExpressionParsing.EXPRESSION_FIRST, JetExpressionParsing.EXPRESSION_FOLLOW))) {
+            if (expect(IDENTIFIER, "Expecting type name",
+                       TokenSet.orSet(JetExpressionParsing.EXPRESSION_FIRST, JetExpressionParsing.EXPRESSION_FOLLOW))) {
                 reference.done(REFERENCE_EXPRESSION);
             }
             else {
