@@ -169,17 +169,9 @@ public class ResolveSession implements KotlinCodeAnalyzer {
         annotations = storageManager.createMemoizedFunction(new Function1<JetFile, LazyAnnotations>() {
             @Override
             public LazyAnnotations invoke(JetFile file) {
-                final JetScope scope = getScopeProvider().getFileScope(file);
-
-                return new LazyAnnotations(
-                        new LazyAnnotationsContext(annotationResolve, storageManager, trace) {
-                            @NotNull
-                            @Override
-                            public JetScope getScope() {
-                                return scope;
-                            }
-                        },
-                        file.getAnnotationEntries());
+                JetScope scope = getScopeProvider().getFileScope(file);
+                LazyAnnotationsContextImpl lazyAnnotationContext = new LazyAnnotationsContextImpl(annotationResolve, storageManager, trace, scope);
+                return new LazyAnnotations(lazyAnnotationContext, file.getAnnotationEntries());
             }
         });
     }

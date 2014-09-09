@@ -41,7 +41,7 @@ import org.jetbrains.jet.lang.resolve.constants.ArrayValue;
 import org.jetbrains.jet.lang.resolve.constants.CompileTimeConstant;
 import org.jetbrains.jet.lang.resolve.constants.IntegerValueTypeConstant;
 import org.jetbrains.jet.lang.resolve.lazy.descriptors.LazyAnnotationDescriptor;
-import org.jetbrains.jet.lang.resolve.lazy.descriptors.LazyAnnotationsContext;
+import org.jetbrains.jet.lang.resolve.lazy.descriptors.LazyAnnotationsContextImpl;
 import org.jetbrains.jet.lang.resolve.scopes.JetScope;
 import org.jetbrains.jet.lang.resolve.scopes.receivers.ReceiverValue;
 import org.jetbrains.jet.lang.types.ErrorUtils;
@@ -122,7 +122,7 @@ public class AnnotationResolver {
     }
 
     private Annotations resolveAnnotationEntries(
-            @NotNull final JetScope scope,
+            @NotNull JetScope scope,
             @NotNull List<JetAnnotationEntry> annotationEntryElements,
             @NotNull BindingTrace trace,
             boolean shouldResolveArguments
@@ -132,17 +132,7 @@ public class AnnotationResolver {
         for (JetAnnotationEntry entryElement : annotationEntryElements) {
             AnnotationDescriptor descriptor = trace.get(BindingContext.ANNOTATION, entryElement);
             if (descriptor == null) {
-                descriptor = new LazyAnnotationDescriptor(
-                        new LazyAnnotationsContext(this, storageManager, trace) {
-
-                            @NotNull
-                            @Override
-                            public JetScope getScope() {
-                                return scope;
-                            }
-                        },
-                        entryElement
-                );
+                descriptor = new LazyAnnotationDescriptor(new LazyAnnotationsContextImpl(this, storageManager, trace, scope), entryElement);
             }
             if (shouldResolveArguments) {
                 resolveAnnotationArguments(entryElement, trace);
