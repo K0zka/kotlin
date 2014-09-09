@@ -177,7 +177,7 @@ public class JetParsing extends AbstractJetParsing {
          * fileAnnotationList
          *   : fileAnnotations*
          */
-        parseFileAnnotationList(/*reportErrorForNonFileAnnotations =*/ true);
+        parseFileAnnotationList(/*recoverOnNonFileAnnotations =*/ true);
 
         /*
          * packageDirective
@@ -197,10 +197,11 @@ public class JetParsing extends AbstractJetParsing {
             consumeIf(SEMICOLON);
         }
         else {
-            packageDirective.drop();
+            // When package directive is omitted we rollback the parsing position
+            // and reparse file annotation list without recovery on non-file annotations.
             firstEntry.rollbackTo();
 
-            parseFileAnnotationList(/*reportErrorForNonFileAnnotations =*/ false);
+            parseFileAnnotationList(/*recoverOnNonFileAnnotations =*/ false);
             packageDirective = mark();
         }
         packageDirective.done(PACKAGE_DIRECTIVE);
@@ -400,7 +401,10 @@ public class JetParsing extends AbstractJetParsing {
                 advance(); // MODIFIER
             }
             else if (at(LBRACKET) || (allowShortAnnotations && at(IDENTIFIER))) {
-                parseAnnotation(allowShortAnnotations);
+                AnnotationParsingMode mode = allowShortAnnotations
+                                             ? AnnotationParsingMode.REGULAR_ANNOTATIONS
+                                             : AnnotationParsingMode.REGULAR_ANNOTATIONS_ONLY_WITH_BRACKETS;
+                parseAnnotation(mode);
             }
             else {
                 break;
@@ -421,10 +425,14 @@ public class JetParsing extends AbstractJetParsing {
      *   : ("[" "file:" annotationEntry+ "]")*
      *   ;
      */
-    private void parseFileAnnotationList(boolean reportErrorForNonFileAnnotations) {
+    private void parseFileAnnotationList(boolean recoverOnNonFileAnnotations) {
+        AnnotationParsingMode mode = recoverOnNonFileAnnotations
+                                     ? AnnotationParsingMode.FILE_ANNOTATIONS_WITH_RECOVERY
+                                     : AnnotationParsingMode.FILE_ANNOTATIONS_WITHOUT_RECOVERY;
+
         PsiBuilder.Marker fileAnnotationsList = mark();
 
-        if (parseAnnotations(/*allowShortAnnotations =*/ false, /*expectedFileAnnotations =*/ true, reportErrorForNonFileAnnotations)) {
+        if (parseAnnotations(mode)) {
             fileAnnotationsList.done(FILE_ANNOTATION_LIST);
         }
         else {
@@ -432,29 +440,19 @@ public class JetParsing extends AbstractJetParsing {
         }
     }
 
-    void parseAnnotations(boolean allowShortAnnotations) {
-        parseAnnotations(allowShortAnnotations, /*expectedFileAnnotations =*/ false, /*reportErrorForNonFileAnnotations =*/ false);
-    }
-
     /*
      * annotations
      *   : annotation*
      *   ;
      */
-    boolean parseAnnotations(boolean allowShortAnnotations, boolean expectedFileAnnotations, boolean reportErrorForNonFileAnnotations) {
-        boolean result = false;
-        while (true) {
-            boolean success = parseAnnotation(allowShortAnnotations, expectedFileAnnotations, reportErrorForNonFileAnnotations);
-            result |= success;
+    boolean parseAnnotations(AnnotationParsingMode mode) {
+        if (!parseAnnotation(mode)) return false;
 
-            if (!(success)) break;
+        while (parseAnnotation(mode)) {
+            // do nothing
         }
 
-        return result;
-    }
-
-    private boolean parseAnnotation(boolean allowShortAnnotations) {
-        return parseAnnotation(allowShortAnnotations, /*expectedFileAnnotations =*/ false, /*reportErrorForNonFileAnnotations =*/ false);
+        return true;
     }
 
     /*
@@ -463,19 +461,15 @@ public class JetParsing extends AbstractJetParsing {
      *   : annotationEntry
      *   ;
      */
-    private boolean parseAnnotation(
-            boolean allowShortAnnotations,
-            boolean expectedFileAnnotations,
-            boolean reportErrorForNonFileAnnotations
-    ) {
+    private boolean parseAnnotation(AnnotationParsingMode mode) {
         if (at(LBRACKET)) {
             PsiBuilder.Marker annotation = mark();
 
             myBuilder.disableNewlines();
             advance(); // LBRACKET
 
-            if (expectedFileAnnotations) {
-                if (!reportErrorForNonFileAnnotations && !(at(FILE_KEYWORD) && lookahead(1) == COLON)) {
+            if (mode.isFileAnnotationParsingMode) {
+                if (mode == AnnotationParsingMode.FILE_ANNOTATIONS_WITHOUT_RECOVERY && !(at(FILE_KEYWORD) && lookahead(1) == COLON)) {
                     annotation.rollbackTo();
                     myBuilder.restoreNewlinesState();
                     return false;
@@ -512,7 +506,7 @@ public class JetParsing extends AbstractJetParsing {
             annotation.done(ANNOTATION);
             return true;
         }
-        else if (allowShortAnnotations && at(IDENTIFIER)) {
+        else if (mode.allowShortAnnotations && at(IDENTIFIER)) {
             parseAnnotationEntry();
             return true;
         }
@@ -830,7 +824,7 @@ public class JetParsing extends AbstractJetParsing {
      */
     private void parseInitializer() {
         PsiBuilder.Marker initializer = mark();
-        parseAnnotations(false);
+        parseAnnotations(AnnotationParsingMode.REGULAR_ANNOTATIONS_ONLY_WITH_BRACKETS);
 
         IElementType type;
         if (at(THIS_KEYWORD)) {
@@ -1203,7 +1197,7 @@ public class JetParsing extends AbstractJetParsing {
      */
     private void parseReceiverType(String title, TokenSet nameFollow, int lastDot) {
         if (lastDot == -1) { // There's no explicit receiver type specified
-            parseAnnotations(false);
+            parseAnnotations(AnnotationParsingMode.REGULAR_ANNOTATIONS_ONLY_WITH_BRACKETS);
         }
         else {
             createTruncatedBuilder(lastDot).parseTypeRef();
@@ -1302,7 +1296,7 @@ public class JetParsing extends AbstractJetParsing {
      */
     private void parseDelegationSpecifier() {
         PsiBuilder.Marker delegator = mark();
-        parseAnnotations(false);
+        parseAnnotations(AnnotationParsingMode.REGULAR_ANNOTATIONS_ONLY_WITH_BRACKETS);
 
         PsiBuilder.Marker reference = mark();
         parseTypeRef();
@@ -1402,7 +1396,7 @@ public class JetParsing extends AbstractJetParsing {
     private void parseTypeConstraint() {
         PsiBuilder.Marker constraint = mark();
 
-        parseAnnotations(false);
+        parseAnnotations(AnnotationParsingMode.REGULAR_ANNOTATIONS_ONLY_WITH_BRACKETS);
 
         if (at(CLASS_KEYWORD)) {
             advance(); // CLASS_KEYWORD
@@ -1484,7 +1478,7 @@ public class JetParsing extends AbstractJetParsing {
         // we don't support this case now
 //        myBuilder.disableJoiningComplexTokens();
         PsiBuilder.Marker typeRefMarker = mark();
-        parseAnnotations(false);
+        parseAnnotations(AnnotationParsingMode.REGULAR_ANNOTATIONS_ONLY_WITH_BRACKETS);
 
         if (at(IDENTIFIER) || at(PACKAGE_KEYWORD)) {
             parseUserType();
@@ -1909,6 +1903,21 @@ public class JetParsing extends AbstractJetParsing {
 
         public boolean isDetected() {
             return detected;
+        }
+    }
+
+    static enum AnnotationParsingMode {
+        FILE_ANNOTATIONS_WITH_RECOVERY(false, true),
+        FILE_ANNOTATIONS_WITHOUT_RECOVERY(false, true),
+        REGULAR_ANNOTATIONS_ONLY_WITH_BRACKETS(false, false),
+        REGULAR_ANNOTATIONS(true, false);
+
+        boolean allowShortAnnotations;
+        boolean isFileAnnotationParsingMode;
+
+        AnnotationParsingMode(boolean allowShortAnnotations, boolean onlyFileAnnotations) {
+            this.allowShortAnnotations = allowShortAnnotations;
+            this.isFileAnnotationParsingMode = onlyFileAnnotations;
         }
     }
 }

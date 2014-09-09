@@ -22,6 +22,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jet.JetNodeType;
+import org.jetbrains.jet.lang.parsing.JetParsing.AnnotationParsingMode;
 import org.jetbrains.jet.lexer.JetToken;
 import org.jetbrains.jet.lexer.JetTokens;
 
@@ -339,12 +340,9 @@ public class JetExpressionParsing extends AbstractJetParsing {
         if (at(LBRACKET)) {
             if (!parseLocalDeclaration()) {
                 PsiBuilder.Marker expression = mark();
-                myJetParsing.parseAnnotations(false);
+                myJetParsing.parseAnnotations(AnnotationParsingMode.REGULAR_ANNOTATIONS_ONLY_WITH_BRACKETS);
                 parsePrefixExpression();
                 expression.done(ANNOTATED_EXPRESSION);
-            }
-            else {
-                return;
             }
         }
         else {
