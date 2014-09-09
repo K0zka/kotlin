@@ -23,7 +23,6 @@ import kotlin.KotlinPackage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jet.lang.descriptors.*;
-import org.jetbrains.jet.lang.descriptors.annotations.Annotated;
 import org.jetbrains.jet.lang.descriptors.annotations.AnnotationDescriptor;
 import org.jetbrains.jet.lang.descriptors.annotations.Annotations;
 import org.jetbrains.jet.lang.descriptors.annotations.AnnotationsImpl;
@@ -210,8 +209,8 @@ public class AnnotationResolver {
         }
     }
 
-    public static void resolveAnnotationsArguments(@NotNull Annotated descriptor, @NotNull BindingTrace trace) {
-        for (AnnotationDescriptor annotationDescriptor : descriptor.getAnnotations()) {
+    public static void resolveAnnotationsArguments(@NotNull Annotations annotations, @NotNull BindingTrace trace) {
+        for (AnnotationDescriptor annotationDescriptor : annotations) {
             JetAnnotationEntry annotationEntry = trace.getBindingContext().get(ANNOTATION_DESCRIPTOR_TO_PSI_ELEMENT, annotationDescriptor);
             assert annotationEntry != null : "Cannot find annotation entry: " + annotationDescriptor;
             resolveAnnotationArguments(annotationEntry, trace);
