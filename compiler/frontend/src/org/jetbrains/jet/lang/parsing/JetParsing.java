@@ -468,9 +468,6 @@ public class JetParsing extends AbstractJetParsing {
             boolean expectedFileAnnotations,
             boolean reportErrorForNonFileAnnotations
     ) {
-        boolean result = false;
-        PsiBuilder.Marker start = mark();
-
         if (at(LBRACKET)) {
             PsiBuilder.Marker annotation = mark();
 
@@ -479,8 +476,7 @@ public class JetParsing extends AbstractJetParsing {
 
             if (expectedFileAnnotations) {
                 if (!reportErrorForNonFileAnnotations && !(at(FILE_KEYWORD) && lookahead(1) == COLON)) {
-                    annotation.drop();
-                    start.rollbackTo();
+                    annotation.rollbackTo();
                     myBuilder.restoreNewlinesState();
                     return false;
                 }
@@ -514,15 +510,14 @@ public class JetParsing extends AbstractJetParsing {
             myBuilder.restoreNewlinesState();
 
             annotation.done(ANNOTATION);
-            result = true;
+            return true;
         }
         else if (allowShortAnnotations && at(IDENTIFIER)) {
             parseAnnotationEntry();
-            result = true;
+            return true;
         }
 
-        start.drop();
-        return result;
+        return false;
     }
 
     /*
