@@ -1,4 +1,4 @@
-JetFile: Attributes.kt
+JetFile: Annotations.kt
   PACKAGE_DIRECTIVE
     PsiElement(package)('package')
     PsiWhiteSpace(' ')
