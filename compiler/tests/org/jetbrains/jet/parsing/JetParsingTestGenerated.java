@@ -599,6 +599,18 @@ public class JetParsingTestGenerated extends AbstractJetParsingTest {
                     doParsingTest(fileName);
                 }
                 
+                @TestMetadata("withoutPackage.kt")
+                public void testWithoutPackage() throws Exception {
+                    String fileName = JetTestUtils.navigationMetadata("compiler/testData/psi/annotation/onFile/withoutPackage.kt");
+                    doParsingTest(fileName);
+                }
+                
+                @TestMetadata("withoutPackageWithSimpleAnnotation.kt")
+                public void testWithoutPackageWithSimpleAnnotation() throws Exception {
+                    String fileName = JetTestUtils.navigationMetadata("compiler/testData/psi/annotation/onFile/withoutPackageWithSimpleAnnotation.kt");
+                    doParsingTest(fileName);
+                }
+                
             }
             
         }
