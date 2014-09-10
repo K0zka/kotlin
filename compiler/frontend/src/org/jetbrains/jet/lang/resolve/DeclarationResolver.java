@@ -97,7 +97,7 @@ public class DeclarationResolver {
         checkRedeclarationsInInnerClassNames(c);
     }
 
-    private void resolveAnnotationsOnFiles(Map<JetFile, ? extends JetScope> file2scope) {
+    private void resolveAnnotationsOnFiles(@NotNull Map<JetFile, ? extends JetScope> file2scope) {
         for (Map.Entry<JetFile, ? extends JetScope> entry : file2scope.entrySet()) {
             JetFile file = entry.getKey();
             JetScope fileScope = entry.getValue();
