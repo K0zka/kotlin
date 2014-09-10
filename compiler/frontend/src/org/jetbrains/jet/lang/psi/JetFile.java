@@ -91,8 +91,8 @@ public class JetFile extends PsiFileBase implements JetDeclarationContainer, Jet
 
     @Nullable
     public <T extends JetElementImplStub<? extends StubElement<?>>> T findChildByTypeOrClass(
-            JetPlaceHolderStubElementType<T> elementType,
-            Class<T> elementClass
+            @NotNull JetPlaceHolderStubElementType<T> elementType,
+            @NotNull Class<T> elementClass
     ) {
         PsiJetFileStub stub = getStub();
         if (stub != null) {

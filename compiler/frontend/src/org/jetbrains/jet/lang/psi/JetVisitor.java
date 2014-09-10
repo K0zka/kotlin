@@ -74,7 +74,7 @@ public class JetVisitor<R, D> extends PsiElementVisitor {
         return visitJetElement(importList, data);
     }
 
-    public R visitFileAnnotationList(JetFileAnnotationList fileAnnotationList, D data) {
+    public R visitFileAnnotationList(@NotNull JetFileAnnotationList fileAnnotationList, D data) {
         return visitJetElement(fileAnnotationList, data);
     }
 
