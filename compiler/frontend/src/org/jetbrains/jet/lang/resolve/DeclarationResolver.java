@@ -99,7 +99,7 @@ public class DeclarationResolver {
         checkRedeclarationsInInnerClassNames(c);
     }
 
-    public void resolveAnnotationsOnFiles(TopDownAnalysisContext c, final ScopeProvider scopeProvider) {
+    public void resolveAnnotationsOnFiles(@NotNull TopDownAnalysisContext c, @NotNull final ScopeProvider scopeProvider) {
         Map<JetFile, JetScope> file2scope = UtilsPackage.keysToMap(c.getFiles(), new Function1<JetFile, JetScope>() {
             @Override
             public JetScope invoke(JetFile file) {
