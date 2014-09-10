@@ -33,7 +33,7 @@ JetFile: Attributes_ERR.kt
       PsiWhiteSpace('\n')
       ANNOTATION
         PsiElement(LBRACKET)('[')
-        PsiErrorElement:Expecting a list of attributes
+        PsiErrorElement:Expecting a list of annotations
           <empty list>
         PsiElement(RBRACKET)(']')
       PsiWhiteSpace('\n')
@@ -79,7 +79,7 @@ JetFile: Attributes_ERR.kt
               REFERENCE_EXPRESSION
                 PsiElement(IDENTIFIER)('b')
             PsiElement(RPAR)(')')
-        PsiErrorElement:No commas needed to separate attributes
+        PsiErrorElement:No commas needed to separate annotations
           PsiElement(COMMA)(',')
         PsiWhiteSpace(' ')
         ANNOTATION_ENTRY
@@ -185,7 +185,7 @@ JetFile: Attributes_ERR.kt
               USER_TYPE
                 REFERENCE_EXPRESSION
                   PsiElement(IDENTIFIER)('d')
-        PsiErrorElement:No commas needed to separate attributes
+        PsiErrorElement:No commas needed to separate annotations
           PsiElement(COMMA)(',')
         PsiWhiteSpace(' ')
         PsiElement(RBRACKET)(']')

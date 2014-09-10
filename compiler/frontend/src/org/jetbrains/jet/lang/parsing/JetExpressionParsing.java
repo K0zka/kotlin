@@ -115,7 +115,7 @@ public class JetExpressionParsing extends AbstractJetParsing {
             EXPRESSION_FIRST,
             TokenSet.create(
                     // declaration
-                    LBRACKET, // attribute
+                    LBRACKET, // annotation
                     FUN_KEYWORD,
                     VAL_KEYWORD, VAR_KEYWORD,
                     TRAIT_KEYWORD,
@@ -139,7 +139,7 @@ public class JetExpressionParsing extends AbstractJetParsing {
         POSTFIX(PLUSPLUS, MINUSMINUS, EXCLEXCL,
                 DOT, SAFE_ACCESS), // typeArguments? valueArguments : typeArguments : arrayAccess
 
-        PREFIX(MINUS, PLUS, MINUSMINUS, PLUSPLUS, EXCL, LABEL_IDENTIFIER) { // attributes
+        PREFIX(MINUS, PLUS, MINUSMINUS, PLUSPLUS, EXCL, LABEL_IDENTIFIER) { // annotations //REVIEW
 
             @Override
             public void parseHigherPrecedence(JetExpressionParsing parser) {
@@ -268,7 +268,7 @@ public class JetExpressionParsing extends AbstractJetParsing {
 
     /*
      * element
-     *   : attributes element
+     *   : annotations element
      *   : "(" element ")" // see tupleLiteral
      *   : literalConstant
      *   : functionLiteral
@@ -1448,7 +1448,7 @@ public class JetExpressionParsing extends AbstractJetParsing {
      *   : "try" block catchBlock* finallyBlock?
      *   ;
      * catchBlock
-     *   : "catch" "(" attributes SimpleName ":" userType ")" block
+     *   : "catch" "(" annotations SimpleName ":" userType ")" block
      *   ;
      *
      * finallyBlock
