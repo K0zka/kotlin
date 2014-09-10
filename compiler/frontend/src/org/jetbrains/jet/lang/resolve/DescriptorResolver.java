@@ -63,7 +63,6 @@ import static org.jetbrains.jet.lexer.JetTokens.VARARG_KEYWORD;
 
 public class DescriptorResolver {
     public static final Name COPY_METHOD_NAME = Name.identifier("copy");
-    public static final String COMPONENT_FUNCTION_NAME_PREFIX = "component";
     private static final Set<JetModifierKeywordToken> MODIFIERS_ILLEGAL_ON_PARAMETERS;
     static {
         MODIFIERS_ILLEGAL_ON_PARAMETERS = Sets.newHashSet();
@@ -382,13 +381,13 @@ public class DescriptorResolver {
             @NotNull ClassDescriptor classDescriptor,
             @NotNull BindingTrace trace
     ) {
-        String functionName = COMPONENT_FUNCTION_NAME_PREFIX + parameterIndex;
+        Name functionName = ComponentFunctionsUtils.createComponentName(parameterIndex);
         JetType returnType = property.getType();
 
         SimpleFunctionDescriptorImpl functionDescriptor = SimpleFunctionDescriptorImpl.create(
                 classDescriptor,
                 Annotations.EMPTY,
-                Name.identifier(functionName),
+                functionName,
                 CallableMemberDescriptor.Kind.SYNTHESIZED,
                 parameter.getSource()
         );
@@ -1482,5 +1481,33 @@ public class DescriptorResolver {
         }
         files.add(file);
         trace.record(BindingContext.PACKAGE_TO_FILES, fqName, files);
+    }
+
+    public static class ComponentFunctionsUtils {
+        private static final String COMPONENT_FUNCTION_NAME_PREFIX = "component";
+
+        public static boolean isComponentLikeName(@NotNull Name name) {
+            String asString = name.asString();
+            if (!asString.startsWith(COMPONENT_FUNCTION_NAME_PREFIX)) return false;
+
+            try {
+                //noinspection ResultOfMethodCallIgnored
+                Integer.valueOf(asString.substring(COMPONENT_FUNCTION_NAME_PREFIX.length()));
+            }
+            catch (NumberFormatException e) {
+                return false;
+            }
+
+            return true;
+        }
+
+        public static int getComponentIndex(@NotNull Name componentName) {
+            return Integer.valueOf(componentName.asString().substring(COMPONENT_FUNCTION_NAME_PREFIX.length()));
+        }
+
+        @NotNull
+        public static Name createComponentName(int index) {
+            return Name.identifier(COMPONENT_FUNCTION_NAME_PREFIX + index);
+        }
     }
 }

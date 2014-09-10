@@ -26,6 +26,7 @@ import org.jetbrains.jet.lang.descriptors.impl.ConstructorDescriptorImpl;
 import org.jetbrains.jet.lang.diagnostics.Errors;
 import org.jetbrains.jet.lang.psi.*;
 import org.jetbrains.jet.lang.resolve.*;
+import org.jetbrains.jet.lang.resolve.DescriptorResolver.ComponentFunctionsUtils;
 import org.jetbrains.jet.lang.resolve.lazy.ResolveSession;
 import org.jetbrains.jet.lang.resolve.lazy.data.JetClassLikeInfo;
 import org.jetbrains.jet.lang.resolve.lazy.declarations.ClassMemberDeclarationProvider;
@@ -161,27 +162,34 @@ public class LazyClassMemberScope extends AbstractLazyMemberScope<LazyClassDescr
         assert constructor.getValueParameters().size() == primaryConstructorParameters.size()
                 : "From descriptor: " + constructor.getValueParameters().size() + " but from PSI: " + primaryConstructorParameters.size();
 
-        int componentIndex = 0;
-        for (ValueParameterDescriptor parameter : constructor.getValueParameters()) {
-            if (parameter.getType().isError()) continue;
-            if (!primaryConstructorParameters.get(parameter.getIndex()).hasValOrVarNode()) continue;
+        if (ComponentFunctionsUtils.isComponentLikeName(name)) {
+            int expectedIndex = ComponentFunctionsUtils.getComponentIndex(name);
 
-            Set<VariableDescriptor> properties = getProperties(parameter.getName());
-            if (properties.isEmpty()) continue;
-            assert properties.size() == 1 : "A constructor parameter is resolved to more than one (" + properties.size() + ") property: " + parameter;
-            PropertyDescriptor property = (PropertyDescriptor) properties.iterator().next();
-            if (property == null) continue;
+            int componentIndex = 0;
+            for (ValueParameterDescriptor parameter : constructor.getValueParameters()) {
+                if (parameter.getType().isError()) continue;
+                if (!primaryConstructorParameters.get(parameter.getIndex()).hasValOrVarNode()) continue;
 
-            ++componentIndex;
+                Set<VariableDescriptor> properties = getProperties(parameter.getName());
+                if (properties.isEmpty()) continue;
 
-            if (name.equals(Name.identifier(DescriptorResolver.COMPONENT_FUNCTION_NAME_PREFIX + componentIndex))) {
-                SimpleFunctionDescriptor functionDescriptor =
-                        DescriptorResolver.createComponentFunctionDescriptor(componentIndex, property,
-                                                                             parameter, thisDescriptor, trace);
-                result.add(functionDescriptor);
-                break;
+                assert properties.size() == 1 :
+                        "A constructor parameter is resolved to more than one (" + properties.size() + ") property: " + parameter;
+
+                PropertyDescriptor property = (PropertyDescriptor) properties.iterator().next();
+                if (property == null) continue;
+
+                ++componentIndex;
+
+                if (componentIndex == expectedIndex) {
+                    SimpleFunctionDescriptor functionDescriptor = DescriptorResolver.createComponentFunctionDescriptor(
+                            componentIndex, property, parameter, thisDescriptor, trace);
+                    result.add(functionDescriptor);
+                    break;
+                }
             }
         }
+
         if (name.equals(DescriptorResolver.COPY_METHOD_NAME)) {
             SimpleFunctionDescriptor copyFunctionDescriptor = DescriptorResolver.createCopyFunctionDescriptor(
                     constructor.getValueParameters(),
@@ -316,7 +324,7 @@ public class LazyClassMemberScope extends AbstractLazyMemberScope<LazyClassDescr
         // Generate componentN functions until there's no such function for some n
         int n = 1;
         while (true) {
-            Name componentName = Name.identifier(DescriptorResolver.COMPONENT_FUNCTION_NAME_PREFIX + n);
+            Name componentName = ComponentFunctionsUtils.createComponentName(n);
             Set<FunctionDescriptor> functions = getFunctions(componentName);
             if (functions.isEmpty()) break;
 

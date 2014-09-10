@@ -599,7 +599,7 @@ public class OverrideResolver {
     private void checkOverrideForMember(@NotNull final CallableMemberDescriptor declared) {
         if (declared.getKind() == CallableMemberDescriptor.Kind.SYNTHESIZED) {
             // TODO: this should be replaced soon by a framework of synthesized member generation tools
-            if (declared.getName().asString().startsWith(DescriptorResolver.COMPONENT_FUNCTION_NAME_PREFIX)) {
+            if (DescriptorResolver.ComponentFunctionsUtils.isComponentLikeName(declared.getName())) {
                 checkOverrideForComponentFunction(declared);
             }
             return;
