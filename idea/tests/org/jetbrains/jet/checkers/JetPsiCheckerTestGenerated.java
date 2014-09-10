@@ -47,9 +47,9 @@ public class JetPsiCheckerTestGenerated extends AbstractJetPsiCheckerTest {
             JetTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/checker"), Pattern.compile("^(.+)\\.kt$"), false);
         }
         
-        @TestMetadata("annotationOnFile.kt")
+        @TestMetadata("AnnotationOnFile.kt")
         public void testAnnotationOnFile() throws Exception {
-            String fileName = JetTestUtils.navigationMetadata("idea/testData/checker/annotationOnFile.kt");
+            String fileName = JetTestUtils.navigationMetadata("idea/testData/checker/AnnotationOnFile.kt");
             doTest(fileName);
         }
         

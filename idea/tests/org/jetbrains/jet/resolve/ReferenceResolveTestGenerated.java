@@ -51,9 +51,9 @@ public class ReferenceResolveTestGenerated extends AbstractReferenceResolveTest 
         doTest(fileName);
     }
     
-    @TestMetadata("annotationOnFile.kt")
+    @TestMetadata("AnnotationOnFile.kt")
     public void testAnnotationOnFile() throws Exception {
-        String fileName = JetTestUtils.navigationMetadata("idea/testData/resolve/references/annotationOnFile.kt");
+        String fileName = JetTestUtils.navigationMetadata("idea/testData/resolve/references/AnnotationOnFile.kt");
         doTest(fileName);
     }
     
