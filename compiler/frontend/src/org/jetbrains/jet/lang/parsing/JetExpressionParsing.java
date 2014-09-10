@@ -768,7 +768,7 @@ public class JetExpressionParsing extends AbstractJetParsing {
             int valPos = matchTokenStreamPredicate(new FirstBefore(new At(VAL_KEYWORD), new AtSet(RPAR, LBRACE, RBRACE, SEMICOLON, EQ)));
             if (valPos >= 0) {
                 PsiBuilder.Marker property = mark();
-                myJetParsing.parseModifierList(MODIFIER_LIST, true);
+                myJetParsing.parseModifierList(MODIFIER_LIST, AnnotationParsingMode.REGULAR_ANNOTATIONS);
                 myJetParsing.parseProperty(true);
                 property.done(PROPERTY);
             }
@@ -952,7 +952,7 @@ public class JetExpressionParsing extends AbstractJetParsing {
     private boolean parseLocalDeclaration() {
         PsiBuilder.Marker decl = mark();
         JetParsing.TokenDetector enumDetector = new JetParsing.TokenDetector(ENUM_KEYWORD);
-        myJetParsing.parseModifierList(MODIFIER_LIST, enumDetector, false);
+        myJetParsing.parseModifierList(MODIFIER_LIST, enumDetector, AnnotationParsingMode.REGULAR_ANNOTATIONS_ONLY_WITH_BRACKETS);
 
         IElementType declType = parseLocalDeclarationRest(enumDetector.isDetected());
 
@@ -1198,7 +1198,7 @@ public class JetExpressionParsing extends AbstractJetParsing {
 
                 PsiBuilder.Marker parameter = mark();
                 int parameterNamePos = matchTokenStreamPredicate(new LastBefore(new At(IDENTIFIER), new AtSet(COMMA, RPAR, COLON, ARROW)));
-                createTruncatedBuilder(parameterNamePos).parseModifierList(MODIFIER_LIST, false);
+                createTruncatedBuilder(parameterNamePos).parseModifierList(MODIFIER_LIST, AnnotationParsingMode.REGULAR_ANNOTATIONS_ONLY_WITH_BRACKETS);
 
                 expect(IDENTIFIER, "Expecting parameter declaration");
 
