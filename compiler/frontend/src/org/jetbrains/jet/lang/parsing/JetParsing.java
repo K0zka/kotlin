@@ -434,7 +434,9 @@ public class JetParsing extends AbstractJetParsing {
      *   ;
      */
     private void parseFileAnnotationList(AnnotationParsingMode mode) {
-        LOG.assertTrue(mode.isFileAnnotationParsingMode, "expected file annotation parsing mode, but:" + mode);
+        if (!mode.isFileAnnotationParsingMode) {
+            LOG.error("expected file annotation parsing mode, but:" + mode);
+        }
 
         PsiBuilder.Marker fileAnnotationsList = mark();
 
