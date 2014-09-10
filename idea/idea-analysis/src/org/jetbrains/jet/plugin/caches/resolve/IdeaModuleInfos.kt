@@ -86,6 +86,8 @@ public data class ModuleProductionSourceInfo(val module: Module) : IdeaModuleInf
     override fun contentScope() = module.getModuleScope(false)
 
     override fun dependencies() = ideaModelDependencies(module, productionOnly = true)
+
+    override fun friendModules() = listOf(module.testSourceInfo())
 }
 
 //TODO: (module refactoring) do not create ModuleTestSourceInfo when there are not test roots for module

@@ -77,6 +77,8 @@ public trait PlatformAnalysisParameters
 public trait ModuleInfo {
     public val name: Name
     public fun dependencies(): List<ModuleInfo>
+    // modules to share visibility group with
+    public fun friendModules(): Collection<ModuleInfo> = listOf(this)
     public fun dependencyOnBuiltins(): DependencyOnBuiltins = DependenciesOnBuiltins.LAST
 
     //TODO: (module refactoring) provide dependency on builtins after runtime in IDEA
@@ -137,11 +139,23 @@ public trait AnalyzerFacade<out A : ResolverForModule, in P : PlatformAnalysisPa
                 module.dependencyOnBuiltins().adjustDependencies(builtinsModule, dependenciesDescriptors)
                 dependenciesDescriptors.forEach { currentModule.addDependencyOnModule(it) }
             }
-
-            resolverForProject.descriptorByModule.values().forEach { it.seal() }
         }
 
         setupModuleDependencies()
+
+        fun addFriends() {
+            modules.forEach {
+                module ->
+                val descriptor = resolverForProject.descriptorForModule(module)
+                module.friendModules().forEach {
+                    descriptor.addFriend(resolverForProject.descriptorForModule(it as M))
+                }
+            }
+        }
+
+        addFriends()
+
+        resolverForProject.descriptorByModule.values().forEach { it.seal() }
 
         fun initializeResolverForProject() {
             modules.forEach {
