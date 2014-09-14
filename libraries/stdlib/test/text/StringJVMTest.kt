@@ -68,6 +68,8 @@ class StringJVMTest {
 
     test fun repeat() {
         fails{ "foo".repeat(-1) }
+        assertEquals("", "".repeat(3))
+        assertEquals("", "".repeat(0))
         assertEquals("", "foo".repeat(0))
         assertEquals("foo", "foo".repeat(1))
         assertEquals("foofoo", "foo".repeat(2))
