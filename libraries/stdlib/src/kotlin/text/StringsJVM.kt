@@ -204,7 +204,7 @@ public fun String.repeat(n: Int): String {
     if (n < 0)
         throw IllegalArgumentException("Value should be non-negative, but was $n")
 
-    val sb = StringBuilder()
+    val sb = StringBuilder(n * length())
     for (i in 1..n) {
         sb.append(this)
     }
